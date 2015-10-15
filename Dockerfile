@@ -29,7 +29,7 @@ RUN mkdir /data/ && touch /var/log/etcd.log /var/log/etcd.err /pgpass /patroni/p
 RUN chown postgres:postgres -R /patroni/ /data/ /pgpass /var/log/etcd.* /patroni/postgres.yml
 ADD docker/entrypoint.sh /entrypoint.sh
 
-EXPOSE 4001 5432 2380
+EXPOSE 4001 5432 2380 8008
 
 ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
 USER postgres

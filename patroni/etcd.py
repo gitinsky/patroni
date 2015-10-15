@@ -172,7 +172,18 @@ class Etcd(AbstractDCS):
         return Member.from_node(node.modifiedIndex, os.path.basename(node.key), node.ttl, node.value)
 
     def _list_clusters(self):
-        return None
+        clusters = None
+        try:
+            result = self.retry(self.client.read, self._BASE_PATH, recursive=False)
+            clusters  = [str(os.path.basename(l.key)) for l in result.leaves]
+        except etcd.EtcdKeyNotFound:
+            logger.exception('list_clusters')
+            return None
+        except:
+            logger.exception('get_cluster')
+            raise EtcdError('Etcd is not responding properly')
+
+        return clusters
 
     def _load_cluster(self):
         try:

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DOCKER_IMAGE="os-registry.stups.zalan.do/acid/patroni:1.0-SNAPSHOT"
+DOCKER_IMAGE="registry.opensource.zalan.do/acid/patroni:1.0-SNAPSHOT"
 MEMBERS=3
 
 
@@ -38,6 +38,12 @@ while getopts "$optspec" optchar; do
                     ;;
                 name=*)
                     PATRONI_SCOPE="${OPTARG#*=}"
+                    ;;
+                etcd)
+                    ETCD="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+                    ;;
+                etcd=*)
+                    ETCD="${OPTARG#*=}"
                     ;;
                 image)
                     DOCKER_IMAGE="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
@@ -77,14 +83,20 @@ then
     PATRONI_SCOPE=$(random_name)
 fi
 
-etcd_container=$(docker run -P -d --name="${PATRONI_SCOPE}_etcd" "${DOCKER_IMAGE}" --etcd-only)
-etcd_container_ip=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${etcd_container})
-echo "The etcd container is ${etcd_container}, ip=${etcd_container_ip}"
+if [ -z $ETCD ]
+then
+    etcd_container=$(docker run -P -d --name="${PATRONI_SCOPE}_etcd" "${DOCKER_IMAGE}" --etcd-only)
+    etcd_container_ip=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${etcd_container})
+    etcd_container_url="${etcd_container_ip}:4001"
+else
+    etcd_container_url="${ETCD}"
+fi
+echo "The etcd container is ${etcd_container}, url=${etcd_container_url}"
 
 for i in $(seq 1 "${MEMBERS}")
 do
     container_name=$(random_name)
-    patroni_container=$(docker run -P -d --name="${PATRONI_SCOPE}_${container_name}" "${DOCKER_IMAGE}" --etcd="${etcd_container_ip}:4001" --name="${PATRONI_SCOPE}")
+    patroni_container=$(docker run -P -d --name="${PATRONI_SCOPE}_${container_name}" "${DOCKER_IMAGE}" --etcd="${etcd_container_url}" --name="${PATRONI_SCOPE}")
     patroni_container_ip=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' ${patroni_container})
     echo "Started Patroni container ${patroni_container}, ip=${patroni_container_ip}"
 done

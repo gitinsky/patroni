@@ -112,6 +112,7 @@ class AbstractDCS:
     _LEADER = 'leader'
     _FAILOVER = 'failover'
     _MEMBERS = 'members/'
+    _BASE_PATH = '/service/'
     _OPTIME = 'optime'
     _LEADER_OPTIME = _OPTIME + '/' + _LEADER
 
@@ -130,7 +131,7 @@ class AbstractDCS:
         self.event = Event()
 
     def client_path(self, path):
-        return '/'.join([self._base_path, path.lstrip('/')])
+        return '/'.join([self._BASE_PATH, self._scope, path.lstrip('/')])
 
     @property
     def initialize_path(self):
