@@ -122,7 +122,7 @@ class AbstractDCS:
             i.e.: `zookeeper` for zookeeper, `etcd` for etcd, etc...
         """
         self._name = name
-        self._scope = config['scope']
+        self._scope = config.get('scope', '')
         self._base_path = '/service/' + self._scope
 
         self._cluster = None
@@ -174,6 +174,14 @@ class AbstractDCS:
                 self._cluster = None
                 raise
             return self._cluster
+
+    @abc.abstractmethod
+    def _list_clusters(self):
+        """This method should return a list of clusternames"""
+
+    def list_clusters(self):
+        with self._cluster_thread_lock:
+            return self._list_clusters()
 
     @property
     def cluster(self):
